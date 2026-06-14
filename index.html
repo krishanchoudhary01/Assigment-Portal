@@ -1,0 +1,1479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Assignment Portal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Serif:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+<style>
+  :root{
+    --ink:#1C2333;
+    --ink-soft:#3D4459;
+    --bg:#F7F8FA;
+    --surface:#FFFFFF;
+    --line:#E1E4EA;
+    --blue:#2C5F8A;
+    --blue-soft:#EAF1F7;
+    --amber:#9A6B12;
+    --amber-bg:#FBF1DF;
+    --red:#A3372F;
+    --red-bg:#FBEEEC;
+    --green:#3A7754;
+    --green-bg:#EAF4EE;
+    --muted:#6B7385;
+    --radius:6px;
+    --sidebar-w:248px;
+  }
+
+  *{margin:0;padding:0;box-sizing:border-box;}
+
+  html,body{
+    font-family:'IBM Plex Sans',sans-serif;
+    background:var(--bg);
+    color:var(--ink);
+    font-size:14px;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  h1,h2,h3,h4{
+    font-family:'IBM Plex Serif',serif;
+    font-weight:600;
+    color:var(--ink);
+  }
+
+  .mono{ font-family:'IBM Plex Mono',monospace; }
+
+  .hidden{display:none !important;}
+
+  /* ===================== AUTH SCREEN ===================== */
+  .auth-page{
+    min-height:100vh;
+    display:flex;
+  }
+  .auth-side{
+    flex:1.1;
+    background:var(--ink);
+    color:#fff;
+    display:flex;
+    flex-direction:column;
+    justify-content:space-between;
+    padding:48px;
+    position:relative;
+    overflow:hidden;
+  }
+  .auth-side::before{
+    content:'';
+    position:absolute;
+    top:-120px; right:-120px;
+    width:340px; height:340px;
+    border:1px solid rgba(255,255,255,0.08);
+    border-radius:50%;
+  }
+  .auth-side::after{
+    content:'';
+    position:absolute;
+    top:-60px; right:-60px;
+    width:200px; height:200px;
+    border:1px solid rgba(255,255,255,0.08);
+    border-radius:50%;
+  }
+  .auth-side-top .crest{
+    width:46px; height:46px;
+    border:1.5px solid #5B86A8;
+    display:flex; align-items:center; justify-content:center;
+    font-family:'IBM Plex Serif',serif;
+    font-weight:700;
+    font-size:20px;
+    color:#9FC4E0;
+    margin-bottom:18px;
+  }
+  .auth-side-top h1{
+    color:#fff;
+    font-size:1.9rem;
+    line-height:1.25;
+    max-width:360px;
+    margin-bottom:10px;
+  }
+  .auth-side-top p{
+    color:#A8B0C2;
+    font-size:0.92rem;
+    max-width:340px;
+    line-height:1.6;
+  }
+  .auth-side-bottom{
+    font-size:0.78rem;
+    color:#7B8499;
+    font-family:'IBM Plex Mono',monospace;
+    letter-spacing:.03em;
+    position:relative;
+    z-index:1;
+  }
+  .auth-side-bottom div{ margin-bottom:4px; }
+
+  .auth-main{
+    flex:1;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:40px;
+  }
+  .auth-box{
+    width:100%;
+    max-width:380px;
+  }
+  .auth-box h2{
+    font-size:1.4rem;
+    margin-bottom:6px;
+  }
+  .auth-box .auth-sub{
+    color:var(--muted);
+    font-size:0.88rem;
+    margin-bottom:28px;
+    line-height:1.5;
+  }
+
+  .role-switch{
+    display:flex;
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    overflow:hidden;
+    margin-bottom:24px;
+  }
+  .role-switch button{
+    flex:1;
+    padding:10px 0;
+    border:none;
+    background:var(--surface);
+    font-family:'IBM Plex Sans',sans-serif;
+    font-weight:600;
+    font-size:0.82rem;
+    letter-spacing:.04em;
+    text-transform:uppercase;
+    color:var(--muted);
+    cursor:pointer;
+    transition:.15s;
+    border-right:1px solid var(--line);
+  }
+  .role-switch button:last-child{ border-right:none; }
+  .role-switch button.active{
+    background:var(--ink);
+    color:#fff;
+  }
+
+  .field{ margin-bottom:16px; }
+  .field label{
+    display:block;
+    font-size:0.78rem;
+    font-weight:600;
+    margin-bottom:6px;
+    color:var(--ink-soft);
+    text-transform:uppercase;
+    letter-spacing:.04em;
+  }
+  .field input, .field select{
+    width:100%;
+    padding:10px 12px;
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    font-size:0.92rem;
+    font-family:'IBM Plex Sans',sans-serif;
+    background:var(--surface);
+    color:var(--ink);
+  }
+  .field input:focus, .field select:focus{
+    outline:2px solid var(--blue);
+    outline-offset:1px;
+    border-color:var(--blue);
+  }
+
+  .btn{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:6px;
+    font-family:'IBM Plex Sans',sans-serif;
+    font-weight:600;
+    font-size:0.85rem;
+    border-radius:var(--radius);
+    cursor:pointer;
+    transition:.15s;
+    border:1px solid transparent;
+    padding:10px 18px;
+  }
+  .btn-block{ width:100%; margin-top:8px; }
+  .btn-primary{ background:var(--ink); color:#fff; }
+  .btn-primary:hover{ background:#2A3247; }
+  .btn-blue{ background:var(--blue); color:#fff; }
+  .btn-blue:hover{ background:#244D70; }
+  .btn-outline{
+    background:var(--surface);
+    color:var(--ink-soft);
+    border:1px solid var(--line);
+  }
+  .btn-outline:hover{ border-color:var(--blue); color:var(--blue); }
+  .btn-danger-outline{
+    background:var(--surface);
+    color:var(--red);
+    border:1px solid var(--line);
+    padding:8px 14px;
+    font-size:0.8rem;
+  }
+  .btn-danger-outline:hover{ border-color:var(--red); background:var(--red-bg); }
+  .btn:focus-visible{ outline:2px solid var(--blue); outline-offset:2px; }
+  .btn:disabled{ opacity:0.6; cursor:default; }
+
+  .auth-toggle{
+    text-align:center;
+    margin-top:18px;
+    font-size:0.84rem;
+    color:var(--muted);
+  }
+  .auth-toggle button{
+    background:none; border:none;
+    color:var(--blue); font-weight:600;
+    cursor:pointer; font-size:0.84rem;
+    font-family:'IBM Plex Sans',sans-serif;
+    text-decoration:underline;
+  }
+
+  .form-msg{
+    font-size:0.82rem;
+    margin-top:10px;
+    padding:9px 12px;
+    border-radius:var(--radius);
+    display:none;
+    border:1px solid transparent;
+  }
+  .form-msg.error{ display:block; background:var(--red-bg); color:var(--red); border-color:#F0D4D1; }
+  .form-msg.success{ display:block; background:var(--green-bg); color:var(--green); border-color:#CFE6D7; }
+
+  .spinner{
+    width:14px;height:14px;
+    border:2px solid rgba(255,255,255,0.35);
+    border-top-color:#fff;
+    border-radius:50%;
+    animation:spin .7s linear infinite;
+    display:inline-block;
+  }
+  @keyframes spin{ to{ transform:rotate(360deg); } }
+
+  /* ===================== APP SHELL ===================== */
+  .app-shell{
+    display:flex;
+    min-height:100vh;
+  }
+
+  /* Sidebar */
+  .sidebar{
+    width:var(--sidebar-w);
+    background:var(--ink);
+    color:#fff;
+    display:flex;
+    flex-direction:column;
+    flex-shrink:0;
+  }
+  .sidebar-brand{
+    padding:22px 24px;
+    border-bottom:1px solid rgba(255,255,255,0.08);
+    display:flex;
+    align-items:center;
+    gap:12px;
+  }
+  .sidebar-brand .crest{
+    width:34px; height:34px;
+    border:1.5px solid #5B86A8;
+    display:flex; align-items:center; justify-content:center;
+    font-family:'IBM Plex Serif',serif;
+    font-weight:700; font-size:15px;
+    color:#9FC4E0;
+    flex-shrink:0;
+  }
+  .sidebar-brand div h1{
+    color:#fff; font-size:0.98rem; line-height:1.3;
+  }
+  .sidebar-brand div span{
+    color:#8088A0; font-size:0.72rem;
+    text-transform:uppercase; letter-spacing:.06em;
+  }
+
+  .sidebar-section{
+    padding:18px 24px 8px;
+    font-size:0.7rem;
+    text-transform:uppercase;
+    letter-spacing:.08em;
+    color:#6E7690;
+    font-weight:600;
+  }
+  .sidebar-nav{
+    flex:1;
+  }
+  .sidebar-link{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding:11px 24px;
+    color:#C2C8D9;
+    font-size:0.88rem;
+    font-weight:500;
+    cursor:pointer;
+    border-left:3px solid transparent;
+    transition:.12s;
+  }
+  .sidebar-link:hover{ background:rgba(255,255,255,0.04); color:#fff; }
+  .sidebar-link.active{
+    background:rgba(44,95,138,0.18);
+    border-left-color:#5B9BD0;
+    color:#fff;
+  }
+  .sidebar-link .dot{
+    width:6px; height:6px; border-radius:50%;
+    background:#5B9BD0; flex-shrink:0;
+  }
+
+  .sidebar-footer{
+    padding:18px 24px;
+    border-top:1px solid rgba(255,255,255,0.08);
+  }
+  .sidebar-user{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom:12px;
+  }
+  .sidebar-avatar{
+    width:36px; height:36px;
+    border-radius:50%;
+    background:#2C5F8A;
+    color:#fff;
+    display:flex; align-items:center; justify-content:center;
+    font-weight:600; font-size:0.85rem;
+    flex-shrink:0;
+    font-family:'IBM Plex Serif',serif;
+  }
+  .sidebar-user div{ overflow:hidden; }
+  .sidebar-user .u-name{
+    color:#fff; font-size:0.85rem; font-weight:600;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  }
+  .sidebar-user .u-role{
+    color:#8088A0; font-size:0.72rem;
+    text-transform:uppercase; letter-spacing:.05em;
+  }
+  .sidebar-signout{
+    width:100%;
+    background:transparent;
+    border:1px solid rgba(255,255,255,0.12);
+    color:#C2C8D9;
+    padding:9px;
+    border-radius:var(--radius);
+    font-size:0.8rem;
+    font-family:'IBM Plex Sans',sans-serif;
+    cursor:pointer;
+    transition:.15s;
+  }
+  .sidebar-signout:hover{ border-color:#5B9BD0; color:#fff; }
+
+  /* Main content */
+  .main{
+    flex:1;
+    min-width:0;
+    padding:32px 40px 60px;
+  }
+
+  .page-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    flex-wrap:wrap;
+    gap:16px;
+    margin-bottom:6px;
+  }
+  .breadcrumb{
+    font-size:0.76rem;
+    color:var(--muted);
+    text-transform:uppercase;
+    letter-spacing:.06em;
+    margin-bottom:6px;
+    font-family:'IBM Plex Mono',monospace;
+  }
+  .page-header h2{
+    font-size:1.55rem;
+  }
+  .page-header .page-sub{
+    color:var(--muted);
+    font-size:0.88rem;
+    margin-top:4px;
+  }
+
+  .divider{
+    border-top:1px solid var(--line);
+    margin:24px 0 28px;
+  }
+
+  /* Stat row */
+  .stat-row{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:14px;
+    margin:24px 0 28px;
+  }
+  @media (max-width:900px){ .stat-row{ grid-template-columns:repeat(2,1fr); } }
+  .stat-card{
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:16px 18px;
+  }
+  .stat-card .stat-label{
+    font-size:0.72rem;
+    text-transform:uppercase;
+    letter-spacing:.06em;
+    color:var(--muted);
+    font-weight:600;
+    margin-bottom:8px;
+  }
+  .stat-card .stat-value{
+    font-family:'IBM Plex Serif',serif;
+    font-size:1.6rem;
+    font-weight:600;
+    color:var(--ink);
+  }
+  .stat-card .stat-value.red{ color:var(--red); }
+  .stat-card .stat-value.amber{ color:var(--amber); }
+  .stat-card .stat-value.green{ color:var(--green); }
+
+  /* Panel */
+  .panel{
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    margin-bottom:24px;
+  }
+  .panel-head{
+    padding:16px 22px;
+    border-bottom:1px solid var(--line);
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    flex-wrap:wrap;
+    gap:10px;
+  }
+  .panel-head h3{
+    font-size:1rem;
+  }
+  .panel-head .panel-note{
+    font-size:0.78rem;
+    color:var(--muted);
+  }
+  .panel-body{
+    padding:22px;
+  }
+
+  .form-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:16px;
+  }
+  .form-grid .field.full{ grid-column:1 / -1; }
+  @media (max-width:680px){ .form-grid{ grid-template-columns:1fr; } }
+
+  .upload-progress{
+    margin-top:14px;
+    height:5px;
+    background:var(--line);
+    border-radius:3px;
+    overflow:hidden;
+    display:none;
+  }
+  .upload-progress.active{ display:block; }
+  .upload-progress-bar{
+    height:100%;
+    background:var(--blue);
+    width:0%;
+    transition:width .2s;
+  }
+
+  /* Filters */
+  .filter-bar{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+    align-items:center;
+  }
+  .filter-bar input, .filter-bar select{
+    padding:8px 12px;
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    font-family:'IBM Plex Sans',sans-serif;
+    font-size:0.84rem;
+    background:var(--surface);
+    color:var(--ink);
+  }
+  .filter-bar input{ min-width:200px; }
+  .filter-bar input:focus, .filter-bar select:focus{
+    outline:2px solid var(--blue);
+    outline-offset:1px;
+    border-color:var(--blue);
+  }
+
+  /* ===================== TABLE ===================== */
+  .table-wrap{
+    overflow-x:auto;
+  }
+  table.records{
+    width:100%;
+    border-collapse:collapse;
+    font-size:0.86rem;
+  }
+  table.records thead th{
+    text-align:left;
+    padding:10px 22px;
+    font-size:0.72rem;
+    text-transform:uppercase;
+    letter-spacing:.06em;
+    color:var(--muted);
+    font-weight:600;
+    border-bottom:1px solid var(--line);
+    background:#FBFBFC;
+    white-space:nowrap;
+  }
+  table.records tbody td{
+    padding:14px 22px;
+    border-bottom:1px solid var(--line);
+    vertical-align:middle;
+    color:var(--ink-soft);
+  }
+  table.records tbody tr:last-child td{ border-bottom:none; }
+  table.records tbody tr:hover{ background:#FAFBFC; }
+
+  .cell-title{
+    font-weight:600;
+    color:var(--ink);
+    font-size:0.92rem;
+    margin-bottom:3px;
+  }
+  .cell-sub{
+    font-size:0.78rem;
+    color:var(--muted);
+  }
+
+  .subject-pill{
+    display:inline-block;
+    background:var(--blue-soft);
+    color:var(--blue);
+    font-size:0.74rem;
+    font-weight:600;
+    padding:3px 10px;
+    border-radius:20px;
+    font-family:'IBM Plex Mono',monospace;
+  }
+
+  .status-badge{
+    display:inline-flex;
+    align-items:center;
+    gap:5px;
+    font-size:0.76rem;
+    font-weight:600;
+    padding:4px 10px;
+    border-radius:20px;
+    white-space:nowrap;
+  }
+  .status-badge.red{ background:var(--red-bg); color:var(--red); }
+  .status-badge.amber{ background:var(--amber-bg); color:var(--amber); }
+  .status-badge.green{ background:var(--green-bg); color:var(--green); }
+  .status-badge::before{
+    content:'';
+    width:6px; height:6px; border-radius:50%;
+    background:currentColor;
+  }
+
+  .row-actions{
+    display:flex;
+    gap:8px;
+    justify-content:flex-end;
+    flex-wrap:nowrap;
+  }
+  .btn-dl{
+    background:var(--ink);
+    color:#fff;
+    padding:7px 14px;
+    border-radius:var(--radius);
+    font-size:0.8rem;
+    font-weight:600;
+    text-decoration:none;
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    white-space:nowrap;
+    transition:.15s;
+    border:none;
+    font-family:'IBM Plex Sans',sans-serif;
+    cursor:pointer;
+  }
+  .btn-dl:hover{ background:#2A3247; }
+  .btn-dl:disabled{ opacity:0.6; cursor:default; }
+
+  .empty-state{
+    text-align:center;
+    padding:60px 24px;
+    color:var(--muted);
+  }
+  .empty-state h4{
+    color:var(--ink);
+    font-size:1rem;
+    margin-bottom:6px;
+  }
+  .empty-state p{ font-size:0.86rem; }
+  .empty-state .icon-box{
+    width:46px; height:46px;
+    border:1.5px solid var(--line);
+    border-radius:var(--radius);
+    margin:0 auto 16px;
+    display:flex; align-items:center; justify-content:center;
+    color:var(--muted);
+    font-size:1.2rem;
+    font-family:'IBM Plex Serif',serif;
+  }
+
+  a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible{
+    outline:2px solid var(--blue);
+    outline-offset:2px;
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    *{ transition:none !important; animation:none !important; }
+  }
+
+  @media (max-width:880px){
+    .app-shell{ flex-direction:column; }
+    .sidebar{
+      width:100%;
+      flex-direction:row;
+      align-items:center;
+      justify-content:space-between;
+      padding:12px 20px;
+    }
+    .sidebar-brand{ border:none; padding:0; }
+    .sidebar-nav, .sidebar-section{ display:none; }
+    .sidebar-footer{ border:none; display:flex; align-items:center; gap:12px; padding:0; }
+    .sidebar-user{ margin-bottom:0; }
+    .sidebar-signout{ width:auto; padding:8px 14px; }
+    .main{ padding:24px 18px 50px; }
+    .auth-page{ flex-direction:column; }
+    .auth-side{ flex:none; padding:32px; }
+    .auth-side::before, .auth-side::after{ display:none; }
+    table.records thead{ display:none; }
+    table.records, table.records tbody, table.records tr, table.records td{ display:block; width:100%; }
+    table.records tbody tr{
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      margin-bottom:12px;
+      padding:6px 0;
+    }
+    table.records tbody td{ border-bottom:none; padding:8px 16px; }
+    .row-actions{ justify-content:flex-start; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ===================== AUTH SCREEN ===================== -->
+<div class="auth-page" id="authScreen">
+  <div class="auth-side">
+    <div class="auth-side-top">
+      <div class="crest">A</div>
+      <h1>Department Assignment Portal</h1>
+      <p>A central place for faculty to publish coursework and for students to retrieve and submit it on time.</p>
+    </div>
+    <div class="auth-side-bottom">
+      <div>SYSTEM &nbsp;·&nbsp; ACADEMIC RECORDS</div>
+      <div>SESSION 2025–26</div>
+    </div>
+  </div>
+
+  <div class="auth-main">
+    <div class="auth-box">
+
+      <div class="role-switch">
+        <button type="button" class="active" id="roleStudentBtn">Student</button>
+        <button type="button" id="roleFacultyBtn">Faculty</button>
+      </div>
+
+      <h2 id="authTitle">Student sign in</h2>
+      <p class="auth-sub" id="authSub">Access and download assignments posted by your faculty.</p>
+
+      <!-- Login form -->
+      <form id="loginForm">
+        <div class="field">
+          <label for="loginUsername">Username</label>
+          <input type="text" id="loginUsername" autocomplete="username" required>
+        </div>
+        <div class="field">
+          <label for="loginPassword">Password</label>
+          <input type="password" id="loginPassword" autocomplete="current-password" required>
+        </div>
+        <button type="submit" class="btn btn-blue btn-block" id="loginBtn">Sign in</button>
+        <div class="form-msg" id="loginMsg"></div>
+      </form>
+
+      <!-- Register form -->
+      <form id="registerForm" class="hidden">
+        <div class="field">
+          <label for="regName">Full name</label>
+          <input type="text" id="regName" autocomplete="name" required>
+        </div>
+        <div class="field">
+          <label for="regUsername">Choose a username</label>
+          <input type="text" id="regUsername" autocomplete="username" required>
+        </div>
+        <div class="field">
+          <label for="regPassword">Choose a password</label>
+          <input type="password" id="regPassword" autocomplete="new-password" required minlength="4">
+        </div>
+        <button type="submit" class="btn btn-blue btn-block" id="registerBtn">Create account</button>
+        <div class="form-msg" id="registerMsg"></div>
+      </form>
+
+      <div class="auth-toggle">
+        <span id="toggleText">New faculty member?</span>
+        <button type="button" id="toggleAuthBtn">Register</button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ===================== APP SHELL ===================== -->
+<div class="app-shell hidden" id="appShell">
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="crest">A</div>
+      <div>
+        <h1>Assignment Portal</h1>
+        <span id="sidebarRoleLabel">Faculty</span>
+      </div>
+    </div>
+
+    <div class="sidebar-section">Navigation</div>
+    <nav class="sidebar-nav">
+      <div class="sidebar-link active">
+        <span class="dot"></span>
+        <span id="navLabel">Dashboard</span>
+      </div>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="sidebar-user">
+        <div class="sidebar-avatar" id="avatarInitial">F</div>
+        <div>
+          <div class="u-name" id="sideUserName">—</div>
+          <div class="u-role" id="sideUserRole">Faculty</div>
+        </div>
+      </div>
+      <button class="sidebar-signout" id="logoutBtn">Sign out</button>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="main">
+
+    <!-- FACULTY VIEW -->
+    <div id="facultyDash" class="hidden">
+      <div class="breadcrumb">Faculty / Assignments</div>
+      <div class="page-header">
+        <div>
+          <h2>Manage assignments</h2>
+          <p class="page-sub">Publish new coursework and review what has been posted to students.</p>
+        </div>
+      </div>
+
+      <div class="stat-row">
+        <div class="stat-card">
+          <div class="stat-label">Total posted</div>
+          <div class="stat-value" id="statTotal">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Due this week</div>
+          <div class="stat-value amber" id="statDueSoon">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Overdue</div>
+          <div class="stat-value red" id="statOverdue">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Subjects covered</div>
+          <div class="stat-value green" id="statSubjects">0</div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <h3>Post a new assignment</h3>
+          <span class="panel-note">Files are stored and served via Cloudinary</span>
+        </div>
+        <div class="panel-body">
+          <form id="uploadForm">
+            <div class="form-grid">
+              <div class="field">
+                <label for="aTitle">Assignment title</label>
+                <input type="text" id="aTitle" placeholder="e.g. Unit 3 Problem Set" required>
+              </div>
+              <div class="field">
+                <label for="aSubject">Subject</label>
+                <input type="text" id="aSubject" placeholder="e.g. Data Structures" required>
+              </div>
+              <div class="field">
+                <label for="aDue">Due date</label>
+                <input type="date" id="aDue" required>
+              </div>
+              <div class="field">
+                <label for="aFile">Assignment file</label>
+                <input type="file" id="aFile" required>
+              </div>
+              <div class="field full">
+                <label for="aNotes">Instructions (optional)</label>
+                <input type="text" id="aNotes" placeholder="Short note for students">
+              </div>
+            </div>
+            <button type="submit" class="btn btn-blue" id="postBtn">Post assignment</button>
+            <div class="upload-progress" id="uploadProgress">
+              <div class="upload-progress-bar" id="uploadProgressBar"></div>
+            </div>
+            <div class="form-msg" id="uploadMsg"></div>
+          </form>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <h3>Posted assignments</h3>
+          <div class="filter-bar">
+            <input type="text" id="facSearch" placeholder="Search by title or subject">
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table class="records">
+            <thead>
+              <tr>
+                <th>Assignment</th>
+                <th>Subject</th>
+                <th>Due date</th>
+                <th>Status</th>
+                <th>Posted by</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="facultyTableBody"></tbody>
+          </table>
+        </div>
+        <div id="facultyEmpty"></div>
+      </div>
+    </div>
+
+    <!-- STUDENT VIEW -->
+    <div id="studentDash" class="hidden">
+      <div class="breadcrumb">Student / Assignments</div>
+      <div class="page-header">
+        <div>
+          <h2>Your assignments</h2>
+          <p class="page-sub">Coursework published by your faculty. Download the file before the due date.</p>
+        </div>
+      </div>
+
+      <div class="stat-row">
+        <div class="stat-card">
+          <div class="stat-label">Total assignments</div>
+          <div class="stat-value" id="statTotalS">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Due this week</div>
+          <div class="stat-value amber" id="statDueSoonS">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Overdue</div>
+          <div class="stat-value red" id="statOverdueS">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Subjects</div>
+          <div class="stat-value green" id="statSubjectsS">0</div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <h3>All assignments</h3>
+          <div class="filter-bar">
+            <input type="text" id="stuSearch" placeholder="Search by title or subject">
+            <select id="stuSort">
+              <option value="due">Sort: Due date</option>
+              <option value="new">Sort: Newest posted</option>
+            </select>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table class="records">
+            <thead>
+              <tr>
+                <th>Assignment</th>
+                <th>Subject</th>
+                <th>Due date</th>
+                <th>Status</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="studentTableBody"></tbody>
+          </table>
+        </div>
+        <div id="studentEmpty"></div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+
+<script>
+/* ===================== FIREBASE SETUP ===================== */
+const firebaseConfig = {
+  apiKey: "AIzaSyBiHKmL8dlwexTnW1yo1oXlGmOebCYmyZA",
+  authDomain: "college-assignment-porta-4b83b.firebaseapp.com",
+  databaseURL: "https://college-assignment-porta-4b83b-default-rtdb.firebaseio.com",
+  projectId: "college-assignment-porta-4b83b",
+  storageBucket: "college-assignment-porta-4b83b.firebasestorage.app",
+  messagingSenderId: "622666533062",
+  appId: "1:622666533062:web:c8105512eb8e9861d72fc7"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+/* ===================== CLOUDINARY CONFIG ===================== */
+const CLOUDINARY_CLOUD_NAME = "dijhr4tla";
+const CLOUDINARY_UPLOAD_PRESET = "assignment_uploads";
+
+/* ===================== STATE ===================== */
+let currentRole = "student";
+let isRegisterMode = false;
+let currentUser = null;
+let allAssignments = [];
+
+/* ===================== ELEMENT REFS ===================== */
+const authScreen   = document.getElementById('authScreen');
+const appShell     = document.getElementById('appShell');
+const facultyDash  = document.getElementById('facultyDash');
+const studentDash  = document.getElementById('studentDash');
+
+const sideUserName = document.getElementById('sideUserName');
+const sideUserRole = document.getElementById('sideUserRole');
+const sidebarRoleLabel = document.getElementById('sidebarRoleLabel');
+const avatarInitial= document.getElementById('avatarInitial');
+const navLabel     = document.getElementById('navLabel');
+const logoutBtn    = document.getElementById('logoutBtn');
+
+const roleStudentBtn = document.getElementById('roleStudentBtn');
+const roleFacultyBtn = document.getElementById('roleFacultyBtn');
+const authTitle    = document.getElementById('authTitle');
+const authSub      = document.getElementById('authSub');
+const toggleText   = document.getElementById('toggleText');
+const toggleAuthBtn= document.getElementById('toggleAuthBtn');
+
+const loginForm    = document.getElementById('loginForm');
+const registerForm = document.getElementById('registerForm');
+const loginMsg     = document.getElementById('loginMsg');
+const registerMsg  = document.getElementById('registerMsg');
+const loginBtn     = document.getElementById('loginBtn');
+const registerBtn  = document.getElementById('registerBtn');
+
+const uploadForm   = document.getElementById('uploadForm');
+const uploadMsg    = document.getElementById('uploadMsg');
+const postBtn      = document.getElementById('postBtn');
+const uploadProgress = document.getElementById('uploadProgress');
+const uploadProgressBar = document.getElementById('uploadProgressBar');
+
+const facultyTableBody = document.getElementById('facultyTableBody');
+const studentTableBody = document.getElementById('studentTableBody');
+const facultyEmpty = document.getElementById('facultyEmpty');
+const studentEmpty = document.getElementById('studentEmpty');
+const facSearch    = document.getElementById('facSearch');
+const stuSearch    = document.getElementById('stuSearch');
+const stuSort      = document.getElementById('stuSort');
+
+/* ===================== HELPERS ===================== */
+function showMsg(el, text, type){
+  el.textContent = text;
+  el.className = 'form-msg ' + type;
+}
+function clearMsg(el){
+  el.textContent = '';
+  el.className = 'form-msg';
+}
+function formatDate(dateStr){
+  const d = new Date(dateStr + 'T00:00:00');
+  return d.toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric' });
+}
+function dueStatus(dateStr){
+  const today = new Date();
+  today.setHours(0,0,0,0);
+  const due = new Date(dateStr + 'T00:00:00');
+  const diffDays = Math.round((due - today) / (1000*60*60*24));
+  if(diffDays < 0) return {label:'Overdue', cls:'red', diffDays};
+  if(diffDays <= 3) return {label: diffDays === 0 ? 'Due today' : `${diffDays} day${diffDays>1?'s':''} left`, cls:'amber', diffDays};
+  return {label:'On track', cls:'green', diffDays};
+}
+function escapeHtml(str){
+  const div = document.createElement('div');
+  div.textContent = str || '';
+  return div.innerHTML;
+}
+
+/* Force a real file download: fetch as blob (preserves original format),
+   fallback to direct link if CORS blocks the fetch */
+async function forceDownload(btn){
+  const url = btn.getAttribute('data-url');
+  const name = btn.getAttribute('data-name') || 'assignment';
+  const originalLabel = btn.textContent;
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Downloading...';
+
+  console.log('Download URL:', url);
+
+  try{
+    const response = await fetch(url);
+    if(!response.ok) throw new Error('Fetch failed with status ' + response.status);
+    const blob = await response.blob();
+    const blobUrl = URL.createObjectURL(blob);
+
+    const a = document.createElement('a');
+    a.href = blobUrl;
+    a.download = name;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(blobUrl);
+  }catch(err){
+    console.warn('Blob fetch failed, using direct link fallback:', err.message);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = name;
+    a.rel = 'noopener';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  }finally{
+    setTimeout(() => {
+      btn.disabled = false;
+      btn.textContent = originalLabel;
+    }, 800);
+  }
+}
+
+/* ===================== AUTH SCREEN UI ===================== */
+roleStudentBtn.addEventListener('click', () => setRole('student'));
+roleFacultyBtn.addEventListener('click', () => setRole('faculty'));
+
+function setRole(role){
+  currentRole = role;
+  roleStudentBtn.classList.toggle('active', role === 'student');
+  roleFacultyBtn.classList.toggle('active', role === 'faculty');
+  updateAuthCopy();
+  clearMsg(loginMsg);
+  clearMsg(registerMsg);
+}
+
+function updateAuthCopy(){
+  const roleLabel = currentRole === 'faculty' ? 'Faculty' : 'Student';
+  if(isRegisterMode){
+    authTitle.textContent = `${roleLabel} registration`;
+    authSub.textContent = currentRole === 'faculty'
+      ? 'Create a faculty account to post assignments for your students.'
+      : 'Create a student account to access posted assignments.';
+    toggleText.textContent = 'Already have an account?';
+    toggleAuthBtn.textContent = 'Sign in';
+  } else {
+    authTitle.textContent = `${roleLabel} sign in`;
+    authSub.textContent = currentRole === 'faculty'
+      ? 'Sign in to post and manage assignments.'
+      : 'Access and download assignments posted by your faculty.';
+    toggleText.textContent = currentRole === 'faculty' ? 'New faculty member?' : 'New student?';
+    toggleAuthBtn.textContent = 'Register';
+  }
+}
+
+toggleAuthBtn.addEventListener('click', () => {
+  isRegisterMode = !isRegisterMode;
+  loginForm.classList.toggle('hidden', isRegisterMode);
+  registerForm.classList.toggle('hidden', !isRegisterMode);
+  clearMsg(loginMsg);
+  clearMsg(registerMsg);
+  updateAuthCopy();
+});
+
+updateAuthCopy();
+
+/* ===================== REGISTER ===================== */
+registerForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  clearMsg(registerMsg);
+
+  const name = document.getElementById('regName').value.trim();
+  const username = document.getElementById('regUsername').value.trim().toLowerCase();
+  const password = document.getElementById('regPassword').value;
+
+  if(!name || !username || !password){
+    showMsg(registerMsg, 'Please fill in all fields.', 'error');
+    return;
+  }
+  if(/[.#$\[\]\/]/.test(username)){
+    showMsg(registerMsg, 'Username cannot contain special characters: . # $ [ ] /', 'error');
+    return;
+  }
+
+  registerBtn.disabled = true;
+  registerBtn.innerHTML = '<span class="spinner"></span> Creating...';
+
+  try{
+    const userRef = db.ref(`users/${currentRole}/${username}`);
+    const snap = await userRef.get();
+    if(snap.exists()){
+      showMsg(registerMsg, 'This username is already taken. Choose another.', 'error');
+      registerBtn.disabled = false;
+      registerBtn.textContent = 'Create account';
+      return;
+    }
+
+    await userRef.set({ name, username, password, role: currentRole });
+    showMsg(registerMsg, 'Account created. You can now sign in.', 'success');
+    registerForm.reset();
+
+    setTimeout(() => {
+      isRegisterMode = false;
+      registerForm.classList.add('hidden');
+      loginForm.classList.remove('hidden');
+      clearMsg(registerMsg);
+      updateAuthCopy();
+    }, 1200);
+
+  }catch(err){
+    showMsg(registerMsg, 'Something went wrong: ' + err.message, 'error');
+  }finally{
+    registerBtn.disabled = false;
+    registerBtn.textContent = 'Create account';
+  }
+});
+
+/* ===================== LOGIN ===================== */
+loginForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  clearMsg(loginMsg);
+
+  const username = document.getElementById('loginUsername').value.trim().toLowerCase();
+  const password = document.getElementById('loginPassword').value;
+
+  if(!username || !password){
+    showMsg(loginMsg, 'Please enter username and password.', 'error');
+    return;
+  }
+
+  loginBtn.disabled = true;
+  loginBtn.innerHTML = '<span class="spinner"></span> Signing in...';
+
+  try{
+    const snap = await db.ref(`users/${currentRole}/${username}`).get();
+    if(!snap.exists()){
+      showMsg(loginMsg, 'No account found with this username for this role.', 'error');
+      return;
+    }
+    const user = snap.val();
+    if(user.password !== password){
+      showMsg(loginMsg, 'Incorrect password.', 'error');
+      return;
+    }
+
+    currentUser = { username: user.username, name: user.name, role: currentRole };
+    sessionStorage.setItem('cap_user', JSON.stringify(currentUser));
+    enterApp();
+
+  }catch(err){
+    showMsg(loginMsg, 'Sign in failed: ' + err.message, 'error');
+  }finally{
+    loginBtn.disabled = false;
+    loginBtn.textContent = 'Sign in';
+  }
+});
+
+/* ===================== ENTER APP / LOGOUT ===================== */
+function enterApp(){
+  authScreen.classList.add('hidden');
+  appShell.classList.remove('hidden');
+
+  sideUserName.textContent = currentUser.name;
+  sideUserRole.textContent = currentUser.role.charAt(0).toUpperCase() + currentUser.role.slice(1);
+  sidebarRoleLabel.textContent = currentUser.role.charAt(0).toUpperCase() + currentUser.role.slice(1) + ' Account';
+  avatarInitial.textContent = currentUser.name.trim().charAt(0).toUpperCase() || '?';
+
+  if(currentUser.role === 'faculty'){
+    navLabel.textContent = 'Manage Assignments';
+    facultyDash.classList.remove('hidden');
+    studentDash.classList.add('hidden');
+    listenAssignments('faculty');
+  } else {
+    navLabel.textContent = 'My Assignments';
+    studentDash.classList.remove('hidden');
+    facultyDash.classList.add('hidden');
+    listenAssignments('student');
+  }
+}
+
+logoutBtn.addEventListener('click', () => {
+  currentUser = null;
+  sessionStorage.removeItem('cap_user');
+  facultyDash.classList.add('hidden');
+  studentDash.classList.add('hidden');
+  appShell.classList.add('hidden');
+  authScreen.classList.remove('hidden');
+  loginForm.reset();
+  loginForm.classList.remove('hidden');
+  registerForm.classList.add('hidden');
+  isRegisterMode = false;
+  updateAuthCopy();
+});
+
+/* Restore session on reload */
+(function restoreSession(){
+  const saved = sessionStorage.getItem('cap_user');
+  if(saved){
+    try{
+      currentUser = JSON.parse(saved);
+      setRole(currentUser.role);
+      enterApp();
+    }catch(e){ sessionStorage.removeItem('cap_user'); }
+  }
+})();
+
+/* ===================== UPLOAD ASSIGNMENT (Faculty) ===================== */
+uploadForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  clearMsg(uploadMsg);
+
+  const title = document.getElementById('aTitle').value.trim();
+  const subject = document.getElementById('aSubject').value.trim();
+  const due = document.getElementById('aDue').value;
+  const notes = document.getElementById('aNotes').value.trim();
+  const fileInput = document.getElementById('aFile');
+  const file = fileInput.files[0];
+
+  if(!title || !subject || !due || !file){
+    showMsg(uploadMsg, 'Please fill in all required fields and select a file.', 'error');
+    return;
+  }
+
+  postBtn.disabled = true;
+  postBtn.innerHTML = '<span class="spinner"></span> Uploading...';
+  uploadProgress.classList.add('active');
+  uploadProgressBar.style.width = '10%';
+
+  try{
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+
+    const xhr = new XMLHttpRequest();
+    const uploadResult = await new Promise((resolve, reject) => {
+      xhr.open('POST', `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/raw/upload`);
+      xhr.upload.onprogress = (evt) => {
+        if(evt.lengthComputable){
+          const pct = Math.round((evt.loaded / evt.total) * 90) + 10;
+          uploadProgressBar.style.width = pct + '%';
+        }
+      };
+      xhr.onload = () => {
+        if(xhr.status >= 200 && xhr.status < 300){
+          resolve(JSON.parse(xhr.responseText));
+        } else {
+          reject(new Error('Cloudinary upload failed (' + xhr.status + ')'));
+        }
+      };
+      xhr.onerror = () => reject(new Error('Network error during upload.'));
+      xhr.send(formData);
+    });
+
+    uploadProgressBar.style.width = '100%';
+
+    const newRef = db.ref('assignments').push();
+    await newRef.set({
+      title,
+      subject,
+      due,
+      notes,
+      fileUrl: uploadResult.secure_url,
+      fileName: file.name,
+      postedBy: currentUser.name,
+      postedByUsername: currentUser.username,
+      createdAt: Date.now()
+    });
+
+    showMsg(uploadMsg, 'Assignment posted successfully.', 'success');
+    uploadForm.reset();
+
+  }catch(err){
+    showMsg(uploadMsg, 'Upload failed: ' + err.message, 'error');
+  }finally{
+    postBtn.disabled = false;
+    postBtn.textContent = 'Post assignment';
+    setTimeout(() => {
+      uploadProgress.classList.remove('active');
+      uploadProgressBar.style.width = '0%';
+    }, 600);
+  }
+});
+
+/* ===================== ASSIGNMENT LIST (Realtime) ===================== */
+function listenAssignments(viewMode){
+  db.ref('assignments').on('value', (snap) => {
+    const data = snap.val() || {};
+    allAssignments = Object.entries(data).map(([id, val]) => ({ id, ...val }));
+
+    if(viewMode === 'faculty'){
+      renderFacultyTable();
+    } else {
+      renderStudentTable();
+    }
+  });
+}
+
+function computeStats(items, prefix){
+  const total = items.length;
+  let dueSoon = 0, overdue = 0;
+  const subjects = new Set();
+  items.forEach(a => {
+    const s = dueStatus(a.due);
+    if(s.cls === 'red') overdue++;
+    if(s.cls === 'amber') dueSoon++;
+    subjects.add(a.subject.toLowerCase());
+  });
+  document.getElementById('statTotal' + prefix).textContent = total;
+  document.getElementById('statDueSoon' + prefix).textContent = dueSoon;
+  document.getElementById('statOverdue' + prefix).textContent = overdue;
+  document.getElementById('statSubjects' + prefix).textContent = subjects.size;
+}
+
+function renderFacultyTable(){
+  const query = facSearch.value.trim().toLowerCase();
+  let items = allAssignments.filter(a =>
+    a.title.toLowerCase().includes(query) || a.subject.toLowerCase().includes(query)
+  );
+  items.sort((a,b) => b.createdAt - a.createdAt);
+
+  computeStats(allAssignments, '');
+
+  if(items.length === 0){
+    facultyTableBody.innerHTML = '';
+    facultyEmpty.innerHTML = `
+      <div class="empty-state">
+        <div class="icon-box">+</div>
+        <h4>No assignments posted yet</h4>
+        <p>Use the form above to publish your first assignment.</p>
+      </div>`;
+    return;
+  }
+  facultyEmpty.innerHTML = '';
+
+  facultyTableBody.innerHTML = items.map(a => {
+    const status = dueStatus(a.due);
+    return `
+      <tr>
+        <td>
+          <div class="cell-title">${escapeHtml(a.title)}</div>
+          ${a.notes ? `<div class="cell-sub">${escapeHtml(a.notes)}</div>` : ''}
+        </td>
+        <td><span class="subject-pill">${escapeHtml(a.subject)}</span></td>
+        <td>${formatDate(a.due)}</td>
+        <td><span class="status-badge ${status.cls}">${status.label}</span></td>
+        <td>${escapeHtml(a.postedBy)}</td>
+        <td>
+          <div class="row-actions">
+            <button class="btn-dl" data-url="${escapeHtml(a.fileUrl)}" data-name="${escapeHtml(a.fileName)}" onclick="forceDownload(this)">Download</button>
+            <button class="btn-danger-outline" id="del-${a.id}">Delete</button>
+          </div>
+        </td>
+      </tr>`;
+  }).join('');
+
+  items.forEach(a => {
+    const btn = document.getElementById('del-' + a.id);
+    if(btn) btn.addEventListener('click', () => deleteAssignment(a.id, a.title));
+  });
+}
+
+function renderStudentTable(){
+  const query = stuSearch.value.trim().toLowerCase();
+  const sortMode = stuSort.value;
+
+  let items = allAssignments.filter(a =>
+    a.title.toLowerCase().includes(query) || a.subject.toLowerCase().includes(query)
+  );
+
+  if(sortMode === 'due'){
+    items.sort((a,b) => new Date(a.due) - new Date(b.due));
+  } else {
+    items.sort((a,b) => b.createdAt - a.createdAt);
+  }
+
+  computeStats(allAssignments, 'S');
+
+  if(items.length === 0){
+    studentTableBody.innerHTML = '';
+    studentEmpty.innerHTML = `
+      <div class="empty-state">
+        <div class="icon-box">·</div>
+        <h4>No assignments available</h4>
+        <p>Check back later — your faculty will post assignments here.</p>
+      </div>`;
+    return;
+  }
+  studentEmpty.innerHTML = '';
+
+  studentTableBody.innerHTML = items.map(a => {
+    const status = dueStatus(a.due);
+    return `
+      <tr>
+        <td>
+          <div class="cell-title">${escapeHtml(a.title)}</div>
+          ${a.notes ? `<div class="cell-sub">${escapeHtml(a.notes)}</div>` : `<div class="cell-sub">Posted by ${escapeHtml(a.postedBy)}</div>`}
+        </td>
+        <td><span class="subject-pill">${escapeHtml(a.subject)}</span></td>
+        <td>${formatDate(a.due)}</td>
+        <td><span class="status-badge ${status.cls}">${status.label}</span></td>
+        <td>
+          <div class="row-actions">
+            <button class="btn-dl" data-url="${escapeHtml(a.fileUrl)}" data-name="${escapeHtml(a.fileName)}" onclick="forceDownload(this)">Download</button>
+          </div>
+        </td>
+      </tr>`;
+  }).join('');
+}
+
+async function deleteAssignment(id, title){
+  if(!confirm(`Delete "${title}"? This cannot be undone.`)) return;
+  try{
+    await db.ref('assignments/' + id).remove();
+  }catch(err){
+    alert('Could not delete: ' + err.message);
+  }
+}
+
+/* Search/sort listeners */
+facSearch.addEventListener('input', renderFacultyTable);
+stuSearch.addEventListener('input', renderStudentTable);
+stuSort.addEventListener('change', renderStudentTable);
+
+</script>
+</body>
+</html>
