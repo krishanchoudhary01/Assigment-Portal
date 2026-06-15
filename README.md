@@ -25,11 +25,11 @@ A clean, real-time web portal where **faculty can post assignments** and **stude
 
 > Student View — public, no login needed
 
-![Student View](https://via.placeholder.com/900x450/F7F8FA/1C2333?text=Student+Assignment+List)
+![Student View](student.png)
 
 > Faculty Dashboard — post and manage assignments
 
-![Faculty Dashboard](https://via.placeholder.com/900x450/F7F8FA/1C2333?text=Faculty+Dashboard)
+![Faculty Dashboard](Faculty.png)
 
 ---
 
